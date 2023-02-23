@@ -276,17 +276,17 @@ for i=1:nTrials
             WaitSecs(1);
         end
         
-        %%%%% HERE, AT THE BEGINNING OF EACH TRIAL, WE CHECK IF THE PRIOR
-        %%%%% TRIAL WAS A TARGET TRIAL, AND IF YES, SEE IF THERE WAS A
+        %%%%% HERE, AT THE BEGINNING OF EACH EVENT, WE CHECK IF THE PRIOR
+        %%%%% TRIAL WAS A TARGET EVENT, AND IF YES, SEE IF THERE WAS A
         %%%%% KEYBOARD ENTRY!!  IF THERE WAS, THEN WE GET THE INFO USING
         %%%%% GETCHAR, AND RESET
         
-        if target_flag == 1 %if prior trial was a target trial
+        if target_flag == 1 %if prior event was a target event
             check_keyboard(onset_time,side_flag);  %check for responses and record the results
         end
         FlushEvents; 
         target_flag=0; % reset target_flag
-        % >>>  clear the queue for the next char press before each trial, and do it 
+        % >>>  clear the queue for the next char press before each event, and do it 
         % outside if statement so that if key was pressed for non-target it is not an issue.
 
            
@@ -294,6 +294,8 @@ for i=1:nTrials
             nstandard = randi([3,7],1);
             if nstandard > 3
                 nnovel= randi([2,nstandard-2],1);
+%                 x = setdiff(3:nstandard, nnovel);
+%                 nmisophonic = x(randi(numel(x)));
             else
                 nnovel= 2;
             end
@@ -303,9 +305,9 @@ for i=1:nTrials
         
         
   %%%%%%%%%%%%%%%%%%%%%%%%%  Here start the 4 parallel cases. Each run
-  %%%%%%%%%%%%%%%%%%%%%%%%%  through the loop "block" will use the same
-  %%%%%%%%%%%%%%%%%%%%%%%%%  case through ntrials (number of trials per
-  %%%%%%%%%%%%%%%%%%%%%%%%%  block)
+  %%%%%%%%%%%%%%%%%%%%%%%%%  through the loop "trial" will use the same
+  %%%%%%%%%%%%%%%%%%%%%%%%%  case through nEvents (number of events per
+  %%%%%%%%%%%%%%%%%%%%%%%%%  trial)
   
   
         if events(i,i1)==1
@@ -327,6 +329,7 @@ for i=1:nTrials
                       send_trigger(di, events(i,i1)+24, use_trigs);
                       disp(['Novel on LEFT, attended Right and Trigger Number is: ' num2str(events(i,i1)+24)])
                     end
+                    %elseif (where I insert a misophonic case)
                 else
                     tmp=rand(1);
                     if tmp > Percent_Distractors

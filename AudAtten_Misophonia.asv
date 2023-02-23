@@ -276,12 +276,12 @@ for i=1:nTrials
             WaitSecs(1);
         end
         
-        %%%%% HERE, AT THE BEGINNING OF EACH TRIAL, WE CHECK IF THE PRIOR
+        %%%%% HERE, AT THE BEGINNING OF EACH EVENT, WE CHECK IF THE PRIOR
         %%%%% TRIAL WAS A TARGET TRIAL, AND IF YES, SEE IF THERE WAS A
         %%%%% KEYBOARD ENTRY!!  IF THERE WAS, THEN WE GET THE INFO USING
         %%%%% GETCHAR, AND RESET
         
-        if target_flag == 1 %if prior trial was a target trial
+        if target_flag == 1 %if prior event was a target event
             check_keyboard(onset_time,side_flag);  %check for responses and record the results
         end
         FlushEvents; 
@@ -294,6 +294,7 @@ for i=1:nTrials
             nstandard = randi([3,7],1);
             if nstandard > 3
                 nnovel= randi([2,nstandard-2],1);
+                
             else
                 nnovel= 2;
             end
@@ -327,6 +328,7 @@ for i=1:nTrials
                       send_trigger(di, events(i,i1)+24, use_trigs);
                       disp(['Novel on LEFT, attended Right and Trigger Number is: ' num2str(events(i,i1)+24)])
                     end
+                    %elseif (where I insert a misophonic case)
                 else
                     tmp=rand(1);
                     if tmp > Percent_Distractors
