@@ -55,7 +55,11 @@ Percent_Distractors=0.05;
 
 subjectID = input('Enter the subject name:','s');
 
-misophonic_sound = input('Enter the subject specific sound','s'); %take a number that will generate the right sound
+fig = uifigure;
+dd = uidropdown(fig,'Items',{'Red','Yellow','Blue','Green'},...
+                     'Value','Blue');
+
+misophonic_sound = dd.Value;
 
 uiwait(helpdlg('Check: volume settings, audio cable connected???','Triggers box on USB?'));
 
@@ -137,7 +141,8 @@ else
 end
 
 
-
+[misoL, fsmisoL] = audioread(['./stereostimuli/' misophonic_sound '-L.wav']);
+[misoR, fsmisoR] = audioread(['./stereostimuli/' misophonic_sound '-R.wav']);
 
 [devL, fsdevL] = audioread('./stereostimuli/harm-dev-L-50ms.wav');
 [devR, fsdevR] = audioread('./stereostimuli/harm-dev-R-50ms.wav');
@@ -277,7 +282,7 @@ for i=1:nTrials
         end
         
         %%%%% HERE, AT THE BEGINNING OF EACH EVENT, WE CHECK IF THE PRIOR
-        %%%%% TRIAL WAS A TARGET TRIAL, AND IF YES, SEE IF THERE WAS A
+        %%%%% TRIAL WAS A TARGET EVENT, AND IF YES, SEE IF THERE WAS A
         %%%%% KEYBOARD ENTRY!!  IF THERE WAS, THEN WE GET THE INFO USING
         %%%%% GETCHAR, AND RESET
         
@@ -286,7 +291,7 @@ for i=1:nTrials
         end
         FlushEvents; 
         target_flag=0; % reset target_flag
-        % >>>  clear the queue for the next char press before each trial, and do it 
+        % >>>  clear the queue for the next char press before each event, and do it 
         % outside if statement so that if key was pressed for non-target it is not an issue.
 
            
@@ -294,7 +299,8 @@ for i=1:nTrials
             nstandard = randi([3,7],1);
             if nstandard > 3
                 nnovel= randi([2,nstandard-2],1);
-                
+%                 x = setdiff(3:nstandard, nnovel);
+%                 nmisophonic = x(randi(numel(x)));
             else
                 nnovel= 2;
             end
@@ -304,9 +310,9 @@ for i=1:nTrials
         
         
   %%%%%%%%%%%%%%%%%%%%%%%%%  Here start the 4 parallel cases. Each run
-  %%%%%%%%%%%%%%%%%%%%%%%%%  through the loop "block" will use the same
-  %%%%%%%%%%%%%%%%%%%%%%%%%  case through ntrials (number of trials per
-  %%%%%%%%%%%%%%%%%%%%%%%%%  block)
+  %%%%%%%%%%%%%%%%%%%%%%%%%  through the loop "trial" will use the same
+  %%%%%%%%%%%%%%%%%%%%%%%%%  case through nEvents (number of events per
+  %%%%%%%%%%%%%%%%%%%%%%%%%  trial)
   
   
         if events(i,i1)==1

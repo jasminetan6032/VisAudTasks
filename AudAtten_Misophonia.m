@@ -55,7 +55,11 @@ Percent_Distractors=0.05;
 
 subjectID = input('Enter the subject name:','s');
 
-misophonic_sound = input('Enter the subject specific sound','s'); %take a number that will generate the right sound
+fig = uifigure;
+dd = uidropdown(fig,'Items',{'Red','Yellow','Blue','Green'},...
+                     'Value','Blue');
+
+misophonic_sound = dd.Value;
 
 uiwait(helpdlg('Check: volume settings, audio cable connected???','Triggers box on USB?'));
 
@@ -137,7 +141,8 @@ else
 end
 
 
-
+[misoL, fsmisoL] = audioread(['./stereostimuli/' misophonic_sound '-L.wav']);
+[misoR, fsmisoR] = audioread(['./stereostimuli/' misophonic_sound '-R.wav']);
 
 [devL, fsdevL] = audioread('./stereostimuli/harm-dev-L-50ms.wav');
 [devR, fsdevR] = audioread('./stereostimuli/harm-dev-R-50ms.wav');
