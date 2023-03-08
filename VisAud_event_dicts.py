@@ -25,7 +25,10 @@ vis_events = mne.find_events(vis_raw, stim_channel='STI101')
 mne.viz.set_browser_backend('qt')
 #vis_raw.plot()
 import mne
-
+raw_file = '/autofs/cluster/transcend/MEG/AttenAud/104001/104001_AttenAud_run01_raw.fif'
+raw = mne.io.read_raw_fif(raw_file)
+correct_date=raw.info['meas_date'].replace(day=11)
+raw.set_meas_date(correct_date)
 import matplotlib.pyplot as plt
 # the following import is required for matplotlib < 3.2:
 from mpl_toolkits.mplot3d import Axes3D  # noqa
@@ -112,10 +115,11 @@ old_raw.plot_sensors(ch_type='mag', kind='3d')
 raw_file = '/autofs/cluster/transcend/MEG/AttenAud/104001/104001_AttenAud_run02_raw.fif'
 raw = mne.io.read_raw_fif(raw_file)
 
-auditory_raw_file = '/autofs/cluster/transcend/MEG/AttenAud/106201/visit_20210614/106201_AttenAud_run01_raw.fif'
+import mne
+
+auditory_raw_file = '/autofs/cluster/transcend/MEG/AttenAud/AC005/visit_20220327/900005_AttenAud_run01_raw.fif'
 aud_raw = mne.io.read_raw_fif(auditory_raw_file)
 aud_events = mne.find_events(aud_raw, stim_channel='STI101')
 event_list = aud_events[:,2]
 events=event_list.tolist()
-events.remove(2048)
-events.remove(32768)
+eoi = [i for i in events if i < 100] 
