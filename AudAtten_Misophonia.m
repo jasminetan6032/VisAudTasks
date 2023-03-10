@@ -1,4 +1,4 @@
-function AudAtten_20190314_FINAL(use_trigs, Volume_multiplier, nEvents, nRepeats, wait_time,training_flag)
+function AudAtten_Misophonia(use_trigs, Volume_multiplier, nEvents, nRepeats, wait_time,training_flag)
 
 
 % Volume_multiplier - makes the Deviant easier to detect. 1.5 makes it
