@@ -55,7 +55,8 @@ Percent_Distractors=0.05;
 
 subjectID = input('Enter the subject name:','s');
 
-list_misophones = {'chewing','nail_clipping','joint_cracking','snoring'};
+list_misophones = {'breathing','chewing','joint_cracking','lip_smacking','nail_clipping','slurping','snoring', 'swallowing','throat_clearing'};
+
 [indx,tf] = listdlg('ListString',list_misophones);
 misophone = list_misophones{indx};
 
