@@ -1,4 +1,4 @@
-function [p_events, reactionTime, events, correctTrials]= VisAtten_20190311_FINAL(ntrials,use_trigs)
+function [p_events, reactionTime, events, correctTrials]= VisAtten(ntrials,use_trigs)
 
 cd /homes/7/jwt30/Documents/MATLAB
 

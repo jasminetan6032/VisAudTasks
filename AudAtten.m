@@ -1,4 +1,4 @@
-function AudAtten_20190314_FINAL(use_trigs, Volume_multiplier, nEvents, nRepeats, wait_time,training_flag)
+function AudAtten(use_trigs, Volume_multiplier, nEvents, nRepeats, wait_time,training_flag)
 
 
 % Volume_multiplier - makes the Deviant easier to detect. 1.5 makes it
@@ -218,7 +218,7 @@ target_flag=0; %%%This will change to 1 if target is played, and then we know to
 
 
 
-w = Screen('OpenWindow',screenNumber, gray);
+w = Screen('OpenWindow',screenNumber, gray, [0,0,250,250]);
 Screen('Flip', w);
 Screen('FillRect', w,gray);
 Screen('TextSize', w, 60);

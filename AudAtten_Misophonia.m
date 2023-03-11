@@ -225,7 +225,7 @@ target_flag=0; %%%This will change to 1 if target is played, and then we know to
 
 
 
-w = Screen('OpenWindow',screenNumber, gray);
+w = Screen('OpenWindow',screenNumber, gray, [0 0 250 100]);
 Screen('Flip', w);
 Screen('FillRect', w,gray);
 Screen('TextSize', w, 60);
