@@ -1,5 +1,5 @@
 function AudAtten_Misophonia(use_trigs, Volume_multiplier, nEvents, nRepeats, wait_time,training_flag)
-
+%AudAtten_Misophonia(1,1,18,1,2.5,0)
 
 % Volume_multiplier - makes the Deviant easier to detect. 1.5 makes it
 % quite easy. 1 is hardest. 1.2 is a good training volume.
@@ -175,6 +175,9 @@ end
 devL = Volume_multiplier*devL';
 devR = Volume_multiplier*devR';
 
+misoL = misoL';
+misoR = misoR';
+
 stdL1500 = stdL1500';
 stdR1500 = stdR1500';
 
@@ -225,7 +228,7 @@ target_flag=0; %%%This will change to 1 if target is played, and then we know to
 
 
 
-w = Screen('OpenWindow',screenNumber, gray, [0 0 250 100]);
+w = Screen('OpenWindow',screenNumber, gray);
 Screen('Flip', w);
 Screen('FillRect', w,gray);
 Screen('TextSize', w, 60);
@@ -329,8 +332,8 @@ for i=1:nTrials
                     if round(randn(1))
                         if training_flag < 0.5
                             play_sound(misoL,fsmisoL);
-                            send_trigger(di, events(i,i1+44), use_trigs);
-                            disp(['Misophonic sound on LEFT, attended Right and Trigger Number is: ' num2str(events(i,i1+44))])
+                            send_trigger(di, events(i,i1)+44, use_trigs);
+                            disp(['Misophonic sound on LEFT, attended Right and Trigger Number is: ' num2str(events(i,i1)+44)])
                         end
                     else
                         typeNovel = randi([1,8],1);
@@ -419,8 +422,8 @@ for i=1:nTrials
                     if round(randn(1))
                         if training_flag < 0.5
                             play_sound(misoR,fsmisoR);
-                            send_trigger(di, events(i,i1+44), use_trigs);
-                            disp(['Misophonic sound on RIGHT, attended Left and Trigger Number is: ' num2str(events(i,i1+44))])
+                            send_trigger(di, events(i,i1)+44, use_trigs);
+                            disp(['Misophonic sound on RIGHT, attended Left and Trigger Number is: ' num2str(events(i,i1)+44)])
                         end
                     else
                         typeNovel = randi([1,8],1);
@@ -512,8 +515,8 @@ for i=1:nTrials
                     if round(randn(1))
                         if training_flag < 0.5
                             play_sound(misoL,fsmisoL);
-                            send_trigger(di, events(i,i1+44), use_trigs);
-                            disp(['Misophonic sound on LEFT, attended Right and Trigger Number is: ' num2str(events(i,i1+44))])
+                            send_trigger(di, events(i,i1)+44, use_trigs);
+                            disp(['Misophonic sound on LEFT, attended Right and Trigger Number is: ' num2str(events(i,i1)+44)])
                         end
                     else
                         typeNovel = randi([1,8],1);
@@ -603,8 +606,8 @@ for i=1:nTrials
                     if round(randn(1))
                         if training_flag < 0.5
                             play_sound(misoR,fsmisoR);
-                            send_trigger(di, events(i,i1+44), use_trigs);
-                            disp(['Misophonic sound on RIGHT, attended Left and Trigger Number is: ' num2str(events(i,i1+44))])
+                            send_trigger(di, events(i,i1)+44, use_trigs);
+                            disp(['Misophonic sound on RIGHT, attended Left and Trigger Number is: ' num2str(events(i,i1)+44)])
                         end
                     else
                         typeNovel = randi([1,8],1);
@@ -715,6 +718,8 @@ fprintf(1, '# Novels on right, attend Left =  %4d \n', length(find(Triggers_trac
 fprintf(1, '# Novels on left, attend right =  %4d \n', length(find(Triggers_trace==26))+length(find(Triggers_trace==28)));
 fprintf(1, '# Targets on left, attend right =  %4d \n', length(find(Triggers_trace==36))+length(find(Triggers_trace==38)));
 fprintf(1, '# Targets on right, attend left =  %4d \n', length(find(Triggers_trace==35))+length(find(Triggers_trace==37)));
+fprintf(1, '# Misophonic sound on right, attend Left =  %4d \n', length(find(Triggers_trace==45))+length(find(Triggers_trace==47)));
+fprintf(1, '# Misophonic sound on left, attend right =  %4d \n', length(find(Triggers_trace==46))+length(find(Triggers_trace==48)));
 
 
 
