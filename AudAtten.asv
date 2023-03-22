@@ -1,11 +1,10 @@
-function AudAtten_Misophonia(use_trigs, Volume_multiplier, nEvents, nRepeats, wait_time,training_flag)
-%AudAtten_Misophonia(1,1,18,1,2.5,0)
+function AudAtten(use_trigs, Volume_multiplier, nEvents, nRepeats, wait_time,training_flag)
+
 
 % Volume_multiplier - makes the Deviant easier to detect. 1.5 makes it
 % quite easy. 1 is hardest. 1.2 is a good training volume.
 
-% nEvents is the number of events per block that will be presented to each
-% ear (i.e. total number of events per block is nEvents*2)
+% nEvents is the number of events per block
 
 % nRepeats is how many blocks there are PER EAR PER STD CONDITION (so,
 % minimum blocks is 4 (nRepeats input = 1), one std per ear, each ear attended twice, once with
@@ -54,11 +53,6 @@ Percent_Distractors=0.05;
 
 
 subjectID = input('Enter the subject name:','s');
-
-list_misophones = {'breathing','chewing','joint_cracking','lip_smacking','nail_clipping','slurping','snoring', 'swallowing','throat_clearing'};
-
-[indx,tf] = listdlg('ListString',list_misophones);
-misophone = list_misophones{indx};
 
 uiwait(helpdlg('Check: volume settings, audio cable connected???','Triggers box on USB?'));
 
@@ -140,8 +134,7 @@ else
 end
 
 
-[misoL, fsmisoL] = audioread(['./stereostimuli/' misophone 'L.wav']);
-[misoR, fsmisoR] = audioread(['./stereostimuli/' misophone 'R.wav']);
+
 
 [devL, fsdevL] = audioread('./stereostimuli/harm-dev-L-50ms.wav');
 [devR, fsdevR] = audioread('./stereostimuli/harm-dev-R-50ms.wav');
@@ -174,9 +167,6 @@ end
 
 devL = Volume_multiplier*devL';
 devR = Volume_multiplier*devR';
-
-misoL = misoL';
-misoR = misoR';
 
 stdL1500 = stdL1500';
 stdR1500 = stdR1500';
@@ -228,7 +218,7 @@ target_flag=0; %%%This will change to 1 if target is played, and then we know to
 
 
 
-w = Screen('OpenWindow',screenNumber, gray);
+w = Screen('OpenWindow',screenNumber, gray, [0,0,250,250]);
 Screen('Flip', w);
 Screen('FillRect', w,gray);
 Screen('TextSize', w, 60);
@@ -283,17 +273,17 @@ for i=1:nTrials
             WaitSecs(1);
         end
         
-        %%%%% HERE, AT THE BEGINNING OF EACH EVENT, WE CHECK IF THE PRIOR
-        %%%%% TRIAL WAS A TARGET EVENT, AND IF YES, SEE IF THERE WAS A
+        %%%%% HERE, AT THE BEGINNING OF EACH TRIAL, WE CHECK IF THE PRIOR
+        %%%%% TRIAL WAS A TARGET TRIAL, AND IF YES, SEE IF THERE WAS A
         %%%%% KEYBOARD ENTRY!!  IF THERE WAS, THEN WE GET THE INFO USING
         %%%%% GETCHAR, AND RESET
         
-        if target_flag == 1 %if prior event was a target event
+        if target_flag == 1 %if prior trial was a target trial
             check_keyboard(onset_time,side_flag);  %check for responses and record the results
         end
         FlushEvents; 
         target_flag=0; % reset target_flag
-        % >>>  clear the queue for the next char press before each event, and do it 
+        % >>>  clear the queue for the next char press before each trial, and do it 
         % outside if statement so that if key was pressed for non-target it is not an issue.
 
            
@@ -301,8 +291,6 @@ for i=1:nTrials
             nstandard = randi([3,7],1);
             if nstandard > 3
                 nnovel= randi([2,nstandard-2],1);
-%                 x = setdiff(3:nstandard, nnovel);
-%                 nmisophonic = x(randi(numel(x)));
             else
                 nnovel= 2;
             end
@@ -312,9 +300,9 @@ for i=1:nTrials
         
         
   %%%%%%%%%%%%%%%%%%%%%%%%%  Here start the 4 parallel cases. Each run
-  %%%%%%%%%%%%%%%%%%%%%%%%%  through the loop "trial" will use the same
-  %%%%%%%%%%%%%%%%%%%%%%%%%  case through nEvents (number of events per
-  %%%%%%%%%%%%%%%%%%%%%%%%%  trial)
+  %%%%%%%%%%%%%%%%%%%%%%%%%  through the loop "block" will use the same
+  %%%%%%%%%%%%%%%%%%%%%%%%%  case through ntrials (number of trials per
+  %%%%%%%%%%%%%%%%%%%%%%%%%  block)
   
   
         if events(i,i1)==1
@@ -328,21 +316,13 @@ for i=1:nTrials
                     WaitSecs(.99+.3*rand(1));
                     flag1=0;
                 end
-                if count == nnovel
-                    if round(randn(1))
-                        if training_flag < 0.5
-                            play_sound(misoL,fsmisoL);
-                            send_trigger(di, events(i,i1)+44, use_trigs);
-                            disp(['Misophonic sound on LEFT, attended Right and Trigger Number is: ' num2str(events(i,i1)+44)])
-                        end
-                    else
-                        typeNovel = randi([1,8],1);
-                        allevents(i,i1)=events(i,i1);
-                        if training_flag < 0.5
-                            play_sound(eval(['nL' num2str(typeNovel)]),eval(['fsnL' num2str(typeNovel)]));
-                            send_trigger(di, events(i,i1)+24, use_trigs);
-                            disp(['Novel on LEFT, attended Right and Trigger Number is: ' num2str(events(i,i1)+24)])
-                        end
+                 if count == nnovel
+                    typeNovel = randi([1,8],1);
+                    allevents(i,i1)=events(i,i1);
+                    if training_flag < 0.5
+                      play_sound(eval(['nL' num2str(typeNovel)]),eval(['fsnL' num2str(typeNovel)]));
+                      send_trigger(di, events(i,i1)+24, use_trigs);
+                      disp(['Novel on LEFT, attended Right and Trigger Number is: ' num2str(events(i,i1)+24)])
                     end
                 else
                     tmp=rand(1);
@@ -417,22 +397,14 @@ for i=1:nTrials
                     WaitSecs(.99+.3*rand(1));
                     flag1=0;
                 end
-
+                
                 if count == nnovel
-                    if round(randn(1))
-                        if training_flag < 0.5
-                            play_sound(misoR,fsmisoR);
-                            send_trigger(di, events(i,i1)+44, use_trigs);
-                            disp(['Misophonic sound on RIGHT, attended Left and Trigger Number is: ' num2str(events(i,i1)+44)])
-                        end
-                    else
-                        typeNovel = randi([1,8],1);
-                        if training_flag < 0.5
-                            play_sound(eval(['nR' num2str(typeNovel)]),eval(['fsnR' num2str(typeNovel)]));
-                            allevents(i,i1)=events(i,i1)+6;
-                            send_trigger(di, events(i,i1)+24, use_trigs);
-                            disp(['Novel on right, attended Left, and Trigger Number is: ' num2str(events(i,i1)+24)])
-                        end
+                    typeNovel = randi([1,8],1);
+                    if training_flag < 0.5
+                       play_sound(eval(['nR' num2str(typeNovel)]),eval(['fsnR' num2str(typeNovel)]));
+                       allevents(i,i1)=events(i,i1)+6;
+                       send_trigger(di, events(i,i1)+24, use_trigs);
+                       disp(['Novel on right, attended Left, and Trigger Number is: ' num2str(events(i,i1)+24)])
                     end
                 else
                     tmp=rand(1);
@@ -510,22 +482,14 @@ for i=1:nTrials
                     WaitSecs(.99+.3*rand(1));
                     flag1=0;
                 end
-
+                
                 if count == nnovel
-                    if round(randn(1))
-                        if training_flag < 0.5
-                            play_sound(misoL,fsmisoL);
-                            send_trigger(di, events(i,i1)+44, use_trigs);
-                            disp(['Misophonic sound on LEFT, attended Right and Trigger Number is: ' num2str(events(i,i1)+44)])
-                        end
-                    else
-                        typeNovel = randi([1,8],1);
-                        if training_flag < 0.5
-                            play_sound(eval(['nL' num2str(typeNovel)]),eval(['fsnL' num2str(typeNovel)]))
-                            allevents(i,i1)=events(i,i1)+8;
-                            send_trigger(di, events(i,i1)+24, use_trigs);
-                            disp(['Novel on Left, attended Right, and Trigger Number is: ' num2str(events(i,i1)+24)])
-                        end
+                    typeNovel = randi([1,8],1);
+                    if training_flag < 0.5
+                        play_sound(eval(['nL' num2str(typeNovel)]),eval(['fsnL' num2str(typeNovel)]))
+                        allevents(i,i1)=events(i,i1)+8;
+                        send_trigger(di, events(i,i1)+24, use_trigs);
+                        disp(['Novel on Left, attended Right, and Trigger Number is: ' num2str(events(i,i1)+24)])
                     end
                 else
                     tmp=rand(1);
@@ -601,22 +565,14 @@ for i=1:nTrials
                     WaitSecs(.99+.3*rand(1));
                     flag1=0;
                 end
-
+                
                 if count == nnovel
-                    if round(randn(1))
-                        if training_flag < 0.5
-                            play_sound(misoR,fsmisoR);
-                            send_trigger(di, events(i,i1)+44, use_trigs);
-                            disp(['Misophonic sound on RIGHT, attended Left and Trigger Number is: ' num2str(events(i,i1)+44)])
-                        end
-                    else
-                        typeNovel = randi([1,8],1);
-                        if training_flag < 0.5
-                            play_sound(eval(['nR' num2str(typeNovel)]),eval(['fsnR' num2str(typeNovel)]))
-                            allevents(i,i1)=events(i,i1)+10;
-                            send_trigger(di, events(i,i1)+24, use_trigs);
-                            disp(['Novel on Right, attended Left, and Trigger Number is: ' num2str(events(i,i1)+24)])
-                        end
+                    typeNovel = randi([1,8],1);
+                    if training_flag < 0.5
+                       play_sound(eval(['nR' num2str(typeNovel)]),eval(['fsnR' num2str(typeNovel)]))
+                       allevents(i,i1)=events(i,i1)+10;
+                       send_trigger(di, events(i,i1)+24, use_trigs);
+                       disp(['Novel on Right, attended Left, and Trigger Number is: ' num2str(events(i,i1)+24)])
                     end
                 else
                     tmp=rand(1);
@@ -718,8 +674,6 @@ fprintf(1, '# Novels on right, attend Left =  %4d \n', length(find(Triggers_trac
 fprintf(1, '# Novels on left, attend right =  %4d \n', length(find(Triggers_trace==26))+length(find(Triggers_trace==28)));
 fprintf(1, '# Targets on left, attend right =  %4d \n', length(find(Triggers_trace==36))+length(find(Triggers_trace==38)));
 fprintf(1, '# Targets on right, attend left =  %4d \n', length(find(Triggers_trace==35))+length(find(Triggers_trace==37)));
-fprintf(1, '# Misophonic sound on right, attend Left =  %4d \n', length(find(Triggers_trace==45))+length(find(Triggers_trace==47)));
-fprintf(1, '# Misophonic sound on left, attend right =  %4d \n', length(find(Triggers_trace==46))+length(find(Triggers_trace==48)));
 
 
 
@@ -732,7 +686,7 @@ fprintf(1, '# Misophonic sound on left, attend right =  %4d \n', length(find(Tri
 % print(gcf,'-dpng',strcat('/home/transcend/Documents/Stimuli/R01-Feedforward-Feedback/2008-cueshift/MatFiles/',subjectID,'_',dateString,'_results','.png'))
 
 save(strcat('/home/transcend/Documents/Stimuli/R01-Feedforward-Feedback/2008-cueshift/MatFiles/',subjectID,'_',dateString,'_Results','.mat'),...
-    'events','Triggers_trace','Response_trace','keyPressed','kbresponsetime','allevents','Volume_multiplier','detected','mrt','Response_trace','nEvents','nRepeats','training_flag','misophone');
+    'events','Triggers_trace','Response_trace','keyPressed','kbresponsetime','allevents','Volume_multiplier','detected','mrt','Response_trace','nEvents','nRepeats','training_flag');
 
 
     function play_sound(sound_data, sfreq)

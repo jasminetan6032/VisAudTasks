@@ -1,0 +1,76 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Mar 17 14:30:19 2023
+
+@author: jwt30
+
+Data collected prior to March 2023 had several issues with triggers. 
+"""
+
+import mne 
+import numpy
+
+
+file = '/autofs/cluster/transcend/MEG/AttenAud/110101/visit_20220930/110101_AttenAud_run02_raw.fif'
+raw = mne.io.read_raw_fif(file)
+events = mne.find_events(raw, stim_channel='STI101')
+
+#calculate the time between each trigger from the sample number of each event
+event_sample_number = events[:,0]
+
+sample_differences = numpy.diff(event_sample_number).tolist()
+sample_differences.insert(0, 0)
+
+sample_differences = numpy.array(sample_differences)
+sample_differences = numpy.reshape(sample_differences,(sample_differences.size,1))
+
+data = numpy.append(events,sample_differences, axis = 1)
+data2=numpy.array([data[i,:] for i in range(0, len(data)) if numpy.any(data[i,2]== [256,4096]) and data[i,3]<400]) 
+final_events = numpy.array([data[i,:] for i in range(0, len(data)) if numpy.all(data[i,0] != data2[:,0])]) 
+
+stimuli_list = final_events[:,2].tolist()
+list_of_stimuli_triggers = [i for i in stimuli_list if i < 100] 
+list_of_response_triggers = [i for i in stimuli_list if i > 100] 
+
+nHits = numpy.array([i for i in range(0, len(final_events)) 
+                     if numpy.any(final_events[i,2]== [256,4096]) and numpy.any(final_events[i-1,2]==[11,12,13,14])])
+nFalseAlarms = numpy.array([i for i in range(0, len(final_events)) 
+                            if numpy.any(final_events[i,2]== [256,4096]) and not numpy.any(final_events[i-1,2]==[11,12,13,14])])
+nMisses = numpy.array([i for i in range(0, len(final_events)) 
+                       if numpy.any(final_events[i,2]==[11,12,13,14]) and not numpy.any(final_events[i+1,2]== [256,4096])])
+nCorrectRejections = numpy.array([i for i in range(0, len(final_events)-1) 
+                                  if numpy.any(final_events[i,2]==[1,2,3,4,5,6,7,8,25,26,27,28,35,36,37,38]) and not numpy.any(final_events[i+1,2]== [256,4096])])
+
+all_responses = nHits.tolist() + nFalseAlarms.tolist() 
+reaction_time = numpy.average(final_events[all_responses,3]/raw.info['sfreq'])
+
+#check number of triggers add up
+check_for_nResponses = len(nHits) + len(nFalseAlarms) == len(list_of_response_triggers)
+check_for_nStimuli = len(nCorrectRejections) + len(nFalseAlarms) + len(nHits) + len(nMisses) +1 == len(list_of_stimuli_triggers)
+
+behavioural_data = { "nHits":nHits, "nFalseAlarms":nFalseAlarms, "nMisses":nMisses, "nCorrecRejections":nCorrectRejections, 
+                    "check_for_nResponses": check_for_nResponses, "check_for_nStimuli":check_for_nStimuli,
+                    "%correct":round(len(nHits)/(len(nHits)+len(nMisses),2)), "total_nStimuli":len(list_of_stimuli_triggers),"total_Responses": len(list_of_response_triggers),
+                    "reaction_time": reaction_time}
+
+import pickle
+    
+with open('behavioural_data.pickle', 'wb') as handle:
+    pickle.dump(behavioural_data, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    
+#check for number of stimuli triggers. If it doesn't equal to 288 for AttenAud and 168 for AttenVis (per run), flag to take a look.
+stimuli_list = events[:,2].tolist()
+list_of_stimuli_triggers = [i for i in stimuli_list if i < 100] 
+list_of_response_triggers = [i for i in stimuli_list if i > 100] 
+
+#check column two for any triggers that do not start from zero and print the number in column 3
+non_zero_initial_states = [i for i in range(0, len(events)) if events[i,1]!= 0] #will work with multiple non-zero entries
+problematic_events = events[non_zero_initial_states,:]
+#correct triggers by removing the initial nonzero state from the number in column 3
+events[non_zero_initial_states,2] = events[non_zero_initial_states,2] - events[non_zero_initial_states,1] 
+#if we definitely want all triggers even if interrupted by the button press, here's a quicker option
+events[:,2] = events[:,2] - events[:,1]
+
+
+
