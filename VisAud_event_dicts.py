@@ -74,9 +74,11 @@ auditory_event_dict = {'attend_right_standard_high_right': 1,
                      'attend_left_devR_high': 38,
                      'novel_right_low': 26,
                      'novel_right_high': 28,
-                     'response_right': 2048,
-                     'response_left': 32768
+                     'response_right': [256,512,1024,2048],
+                     'response_left': [4096,8192,16384,32768]
                      }
+
+
 
 # exploring subjet 085701's head size
 recent_raw_file = '/autofs/cluster/transcend/MEG/AttenVis/085701/visit_20220324/085701_AttenVis_run02_raw.fif'

@@ -27,7 +27,7 @@ participant_events = mne.find_events(participant, stim_channel='STI101',shortest
 
 earlier_participant_file = '/autofs/cluster/transcend/MEG/AttenAud/110101/visit_20220930/110101_AttenAud_run02_raw.fif'
 earlier_participant = mne.io.read_raw_fif(earlier_participant_file)
-earlier_participant_events = mne.find_events(earlier_participant, stim_channel='STI101', min_duration=0.002)
+earlier_participant_events = mne.find_events(earlier_participant, stim_channel='STI101',output='step',shortest_event = 1, min_duration= 0.002)
 event_sample_number = earlier_participant_events[:,0]
 events_earlier_participant =  earlier_participant_events[:,2].tolist()
 
@@ -68,6 +68,9 @@ test_buttons_file = '/autofs/space/megraid_research/MEG/tal/subj_test_buttons/23
 test_buttons = mne.io.read_raw_fif(test_buttons_file)
 test_buttons_events = mne.find_events(test_buttons, stim_channel='STI101',shortest_event=1)
 
-event_list = test_buttons_events[:,2]
-events=event_list.tolist()
-eoi = [i for i in events if i > 100] 
+event_list = test_buttons_events[:,2].tolist()
+eoi = [i for i in event_list if i < 100] 
+
+file = '/autofs/cluster/transcend/MEG/AttenAud/098501/098501_AttenAud_run02_raw.fif'
+raw = mne.io.read_raw_fif(file)
+events = mne.find_events(raw, stim_channel='STI101',output='step',shortest_event=1)
