@@ -21,6 +21,28 @@ all_targets = right_targets + left_targets
 all_triggers = right_triggers + left_triggers
 not_targets = [1,2,3,4,5,6,7,8,25,26,27,28,35,36,37,38]
 
+auditory_event_dict = {'attend_right_standard_high_right': 1,
+                     'attend_right_standard_low_right': 3,
+                     'attend_right_target_high': 11,
+                     'attend_right_target_low': 13,
+                     'attend_right_low_left': 5,
+                     'attend_right_high_left': 7,
+                     'attend_right_devL_low': 35,
+                     'attend_right_devL_high': 37,
+                     'novel_left_low': 25,
+                     'novel_left_high': 27,
+                     'attend_left_standard_high_left': 2,
+                     'attend_left_standard_low_left': 4,
+                     'attend_left_target_high': 12,
+                     'attend_left_target_low': 14,
+                     'attend_left_low_right': 6,
+                     'attend_left_high_right': 8,
+                     'attend_left_devR_low': 36,
+                     'attend_left_devR_high': 38,
+                     'novel_right_low': 26,
+                     'novel_right_high': 28,
+                     }  
+
 file = '/autofs/cluster/transcend/MEG/AttenAud/110101/visit_20220930/110101_AttenAud_run02_raw.fif'
 raw = mne.io.read_raw_fif(file)
 events = mne.find_events(raw, stim_channel='STI101')
@@ -31,12 +53,17 @@ list_of_stimuli_triggers = [i for i in stimuli_list if i < 100]
 list_of_response_triggers = [i for i in stimuli_list if i > 100] 
 
 #check column two for any triggers that do not start from zero and print the number in column 3
-non_zero_initial_states = [i for i in range(0, len(events)) if events[i,1]!= 0] #will work with multiple non-zero entries
+non_zero_initial_states = [i for i in range(0, len(events)) if numpy.any(events[i,1]== all_triggers)] #only apply the superimposition fix if the initial state is a response trigger
 problematic_events = events[non_zero_initial_states,:]
 #correct triggers by removing the initial nonzero state from the number in column 3
-events[non_zero_initial_states,2] = events[non_zero_initial_states,2] - events[non_zero_initial_states,1] 
-#if we definitely want all triggers even if interrupted by the button press, here's a quicker option
-events[:,2] = events[:,2] - events[:,1]
+#different treatments for stimuli triggers (always below 255) and response triggers (always above 255)
+for i in non_zero_initial_states:
+    if events[i,2] - events[i,1] > 255: 
+        events[i,2] = events[i,2] + events[i,1] #response triggers have to be added when they are superimposed on each other
+    else: events[i,2] = events[i,2] - events[i,1] #stimuli triggers are fixed by subtracting the response trigger superimposed on them
+    
+#the simpler way
+#events[:,2] = events[:,2] - events[:,1] 
 
 #calculate the time between each trigger from the sample number of each event
 event_sample_number = events[:,0]
@@ -48,8 +75,11 @@ sample_differences = numpy.array(sample_differences)
 sample_differences = numpy.reshape(sample_differences,(sample_differences.size,1))
 
 original_events = numpy.append(events,sample_differences, axis = 1)
-sticky_triggers =numpy.array([original_events[i,:] for i in range(0, len(original_events)) 
-                              if numpy.any(original_events[i,2]== all_triggers) and original_events[i,3]<400]) 
+#first check if it is a button press, then drop it if the previous one were also button presses or were fixed from button press superimpositions 
+#and followed too quickly from the previous trigger
+sticky_triggers =numpy.array([original_events[i,:] for i in range(0, len(original_events)) #
+                              if (numpy.any(original_events[i-1,2]== all_triggers) or numpy.any(original_events[i-1,1]== all_triggers) or original_events[i,1]!=0 ) and numpy.any(original_events[i,2] == all_triggers) and original_events[i,3]<300]) 
+
 fixed_events = numpy.array([original_events[i,:] for i in range(0, len(original_events)) if numpy.all(original_events[i,0] != sticky_triggers[:,0])]) 
 
 #recheck for number of stimuli triggers. If it doesn't equal to 288 for AttenAud and 168 for AttenVis (per run), flag to take a look.
@@ -60,24 +90,44 @@ list_of_response_triggers = [i for i in stimuli_list if i > 100]
 #convert fixed events into dataframe to analyse
 analysed_events = pandas.DataFrame(fixed_events) 
 analysed_events.columns = ['sample', 'initialState','trigger','sampleDifference']
+
+trigger_counts = analysed_events['trigger'].value_counts()
+
+#check for largest number of triggers 
+likely_response_triggers = trigger_counts[trigger_counts.index > 100].nlargest(2).index
+
+if numpy.any(likely_response_triggers[0] == right_triggers):
+    auditory_event_dict.update({'response_right':likely_response_triggers[0]})
+    auditory_event_dict.update({'response_left':likely_response_triggers[1]})
+elif numpy.any(likely_response_triggers[0] == left_triggers):
+    auditory_event_dict.update({'response_right':likely_response_triggers[1]})
+    auditory_event_dict.update({'response_left':likely_response_triggers[0]})
+
+both_buttons = [auditory_event_dict['response_left'], auditory_event_dict['response_right']]
 analysed_events['response'] = ""
 
 for i in range(0, len(analysed_events)-1):
-    if ((numpy.any(analysed_events.trigger[i] == right_triggers) and numpy.any(analysed_events.trigger[i-1] == right_targets)) or 
-        (numpy.any(analysed_events.trigger[i] == left_triggers) and numpy.any(analysed_events.trigger[i-1] == left_targets))):
+    if ((numpy.any(analysed_events.trigger[i] == auditory_event_dict['response_right']) and numpy.any(analysed_events.trigger[i-1] == right_targets)) or 
+        (numpy.any(analysed_events.trigger[i] == auditory_event_dict['response_left']) and numpy.any(analysed_events.trigger[i-1] == left_targets))):
         analysed_events.loc[i,'response'] = "Hit"
         analysed_events.loc[i-1,'response'] = "Target"
-    elif ((numpy.any(analysed_events.trigger[i] == right_triggers) and numpy.any(analysed_events.trigger[i-1] == left_targets)) or 
-          (numpy.any(analysed_events.trigger[i] == left_triggers) and numpy.any(analysed_events.trigger[i-1] == right_targets))):
+    elif ((numpy.any(analysed_events.trigger[i] == auditory_event_dict['response_right']) and numpy.any(analysed_events.trigger[i-1] == left_targets)) or 
+          (numpy.any(analysed_events.trigger[i] == auditory_event_dict['response_left']) and numpy.any(analysed_events.trigger[i-1] == right_targets))):
         analysed_events.loc[i,'response'] = "Incorrect_Response"
         analysed_events.loc[i-1,'response'] = "Target"
-    elif numpy.any(analysed_events.trigger[i] == all_triggers) and not numpy.any(analysed_events.trigger[i-1] == all_targets):
+    elif numpy.any(analysed_events.trigger[i] == both_buttons) and not numpy.any(analysed_events.trigger[i-1] == all_targets):
         analysed_events.loc[i,'response'] = "False_Alarm"
         analysed_events.loc[i-1,'response'] = "Non-Target"
     elif numpy.any(analysed_events.trigger[i] == all_targets) and not numpy.any(analysed_events.trigger[i+1]== all_triggers):
         analysed_events.loc[i,'response'] = "Missed_Target"
     elif numpy.any(analysed_events.trigger[i]==not_targets) and not numpy.any(analysed_events.trigger[i+1] == all_triggers):
-            analysed_events.loc[i,'response'] = "Correct_Rejection"
+        analysed_events.loc[i,'response'] = "Correct_Rejection"
+    elif numpy.any(analysed_events.trigger[i] > 255) and not numpy.any(analysed_events.trigger[i] == both_buttons):
+        analysed_events.loc[i,'response'] = "Unexpected_Response"
+        if numpy.any(analysed_events.trigger[i-1] == all_targets):
+            analysed_events.loc[i-1,'response'] = "Target"
+        else: analysed_events.loc[i-1,'response'] = "Non-Target"
+
 
 #check last trigger
 analysed_events.loc[(len(analysed_events)-1),'response'] = "Correct_Rejection"
@@ -89,8 +139,6 @@ for i in range(0, len(analysed_events)):
     elif analysed_events.loc[i,'response'] == "False_Alarm":
         analysed_events.loc[i,'reaction_time'] = analysed_events.sampleDifference[i]/raw.info['sfreq']
         
-
-trigger_counts = analysed_events['trigger'].value_counts()
 response_counts = analysed_events['response'].value_counts()
 
 #make case for empty fields
@@ -118,31 +166,13 @@ with open('behavioural_data.pickle', 'wb') as handle:
     pickle.dump(behavioural_summary, handle, protocol=pickle.HIGHEST_PROTOCOL)
     
 fixed_events = fixed_events[:,0:3]
-mne.write_events('/autofs/cluster/transcend/MEG/AttenAud/110101/visit_20220930/110101_AttenAud_run02_fixed-eve.fif',fixed_events,overwrite=True)    
+mne.write_events('/autofs/cluster/transcend/MEG/AttenAud/110101/visit_20220930/110101_AttenAud_run02_fixed-eve.fif',fixed_events,overwrite=True)  
+
+
+
+
     
-auditory_event_dict = {'attend_right_standard_high_right': 1,
-                     'attend_right_standard_low_right': 3,
-                     'attend_right_target_high': 11,
-                     'attend_right_target_low': 13,
-                     'attend_right_low_left': 5,
-                     'attend_right_high_left': 7,
-                     'attend_right_devL_low': 35,
-                     'attend_right_devL_high': 37,
-                     'novel_left_low': 25,
-                     'novel_left_high': 27,
-                     'attend_left_standard_high_left': 2,
-                     'attend_left_standard_low_left': 4,
-                     'attend_left_target_high': 12,
-                     'attend_left_target_low': 14,
-                     'attend_left_low_right': 6,
-                     'attend_left_high_right': 8,
-                     'attend_left_devR_low': 36,
-                     'attend_left_devR_high': 38,
-                     'novel_right_low': 26,
-                     'novel_right_high': 28,
-                     'response_right': 256,
-                     'response_left': 4096
-                     }
+
 
 
 epochs = mne.Epochs(raw, fixed_events, tmin=-0.3, tmax=0.7, event_id=auditory_event_dict,
@@ -161,7 +191,15 @@ for i in range(0,len(df)):
     except:
         events = mne.find_events(raw, stim_channel='STI101',shortest_event=1)
         df.at[i,'errors'] = 'ValueError:shortest_event=1'
-    events[:,2] = events[:,2] - events[:,1]
+    non_zero_initial_states = [i for i in range(0, len(events)) if numpy.any(events[i,1]== all_triggers)] #only apply the superimposition fix if the initial state is a response trigger
+    problematic_events = events[non_zero_initial_states,:]
+    #correct triggers by removing the initial nonzero state from the number in column 3
+    #different treatments for stimuli triggers (always below 255) and response triggers (always above 255)
+    for i in non_zero_initial_states:
+        if events[i,2] - events[i,1] > 255: 
+            events[i,2] = events[i,2] + events[i,1] #response triggers have to be added when they are superimposed on each other
+        else: events[i,2] = events[i,2] - events[i,1] #stimuli triggers are fixed by subtracting the response trigger superimposed on them
+        
     stimuli_list = numpy.unique(events[:,2].tolist()).tolist()
     df.at[i,'Trigger_numbers'] = stimuli_list
     

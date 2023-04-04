@@ -71,6 +71,6 @@ test_buttons_events = mne.find_events(test_buttons, stim_channel='STI101',shorte
 event_list = test_buttons_events[:,2].tolist()
 eoi = [i for i in event_list if i < 100] 
 
-file = '/autofs/cluster/transcend/MEG/AttenAud/098501/098501_AttenAud_run02_raw.fif'
+file = '/autofs/cluster/transcend/MEG/AttenAud/073801/visit_20220326/073801_AttenAud_run01_raw.fif'
 raw = mne.io.read_raw_fif(file)
-events = mne.find_events(raw, stim_channel='STI101',output='step',shortest_event=1)
+events = mne.find_events(raw, stim_channel='STI101',shortest_event=1)

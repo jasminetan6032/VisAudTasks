@@ -119,11 +119,15 @@ pahandle = PsychPortAudio('Open');
 PsychPortAudio('LatencyBias',pahandle);
 
 % sets up initial parameters - different for training and not training
-if training_flag
+if training_flag < 5
   training_event=abs(training_flag);
   events = ones(1,nEvents)*training_event;
   nTrials = size(events,1);   
   nRepeats=1;
+elseif training_flag == 5
+   events = [ones(1,nEvents);ones(1,nEvents)*2;ones(1,nEvents)*4;ones(1,nEvents)*3]; 
+   nTrials = size(events,1);   
+   nRepeats=1;
 else
   events = [ones(1,nEvents);ones(1,nEvents)*2;ones(1,nEvents)*3;ones(1,nEvents)*4];
   events=repmat(events,[nRepeats,1]);
@@ -301,8 +305,6 @@ for i=1:nTrials
             nstandard = randi([3,7],1);
             if nstandard > 3
                 nnovel= randi([2,nstandard-2],1);
-%                 x = setdiff(3:nstandard, nnovel);
-%                 nmisophonic = x(randi(numel(x)));
             else
                 nnovel= 2;
             end
@@ -771,6 +773,7 @@ save(strcat('/home/transcend/Documents/Stimuli/R01-Feedforward-Feedback/2008-cue
 %                 reactionTime=round(tempo2,3); % REALLY not sure about this one...
                 reactionTime=0.999;
         %       side_flag
+
 
                 %%%% IN RESPONSE PADS, 11:14 correspond to right side, and 16:19 to
                 %%%% left side
