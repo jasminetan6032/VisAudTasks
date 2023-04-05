@@ -1,5 +1,5 @@
 %create list of sounds to convert
-list_misophones = {'breathing','chewing','joint_cracking','lip_smacking','nail_clipping','slurping','snoring', 'swallowing','throat_clearing'};
+list_misophones = {'breathing','chewing','joint_cracking','lip_smacking','nail_clipping','slurping','snoring', 'sniffing', 'swallowing','throat_clearing'};
 
 cd /local_mount/space/hypatia/2/users/Jasmine/github/VisAudTasks/Misophonia_Stimuli
 
