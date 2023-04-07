@@ -313,7 +313,7 @@ for i=1:nTrials
                     flag1=0;
                 end
                 if count == nnovel
-                    if round(randn(1))
+                    if round(rand(1))
                         if training_flag < 0.5
                             play_sound(misoL,fsmisoL);
                             send_trigger(di, events(i,i1)+44, use_trigs);
@@ -403,7 +403,7 @@ for i=1:nTrials
                 end
 
                 if count == nnovel
-                    if round(randn(1))
+                    if round(rand(1))
                         if training_flag < 0.5
                             play_sound(misoR,fsmisoR);
                             send_trigger(di, events(i,i1)+44, use_trigs);
@@ -496,7 +496,7 @@ for i=1:nTrials
                 end
 
                 if count == nnovel
-                    if round(randn(1))
+                    if round(rand(1))
                         if training_flag < 0.5
                             play_sound(misoL,fsmisoL);
                             send_trigger(di, events(i,i1)+44, use_trigs);
@@ -587,7 +587,7 @@ for i=1:nTrials
                 end
 
                 if count == nnovel
-                    if round(randn(1))
+                    if round(rand(1))
                         if training_flag < 0.5
                             play_sound(misoR,fsmisoR);
                             send_trigger(di, events(i,i1)+44, use_trigs);
@@ -715,7 +715,7 @@ fprintf(1, '# Misophonic sound on left, attend right =  %4d \n', length(find(Tri
 % set(gca,'fontsize',14);
 % print(gcf,'-dpng',strcat('/home/transcend/Documents/Stimuli/R01-Feedforward-Feedback/2008-cueshift/MatFiles/',subjectID,'_',dateString,'_results','.png'))
 
-save(strcat('/local_mount/space/hypatia/2/users/Jasmine/github/VisAudTasks/',subjectID,'_',dateString,'_Results','.mat'),...
+save(strcat('/home/transcend/Documents/Stimuli/R01-Feedforward-Feedback/2008-cueshift/MatFiles/',subjectID,'_',dateString,'_Results','.mat'),...
     'events','Triggers_trace','Response_trace','keyPressed','kbresponsetime','allevents','Volume_multiplier','detected','mrt','Response_trace','nEvents','nRepeats','training_flag','misophone','novels_selected');
 
 
