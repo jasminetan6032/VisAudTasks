@@ -56,9 +56,29 @@ Percent_Distractors=0.05;
 subjectID = input('Enter the subject name:','s');
 
 list_misophones = {'breathing','chewing','joint_cracking','lip_smacking','nail_clipping','slurping','snoring', 'swallowing','throat_clearing'};
+list_novels = {'bang','bark','chain','cling','clong','dtmf','honk','raygun'};
 
-[indx,tf] = listdlg('ListString',list_misophones);
+[indx,tf] = listdlg('ListString',list_misophones); %opens list for you to select misophone
 misophone = list_misophones{indx};
+
+[indx,tf] = listdlg('ListString',list_novels); %opens list for you to select novels. If participant does not report strong reactions to any of them, select all.
+
+%load the sound and sampling frequency of selected novels. 
+% Sampling frequency is always the same so you can simplify the array by
+% making the frequency always the second column
+% Present to Left Ear: select 3rd and 2nd column. 
+% Present to Right Ear: select 4th and 2nd column 
+novels_selected = []; 
+for i = 1:length(indx)
+    novel_i = indx(i);
+    novels_selected{i,1} = list_novels{novel_i};
+    [soundL, FsL] = audioread(['./stereostimuli/' novels_selected{i,1} 'L.wav']);
+    novels_selected{i,2} = FsL; %It's the same for the R sound too.
+    novels_selected{i,3} = soundL';
+
+    [soundR, FsR] = audioread(['./stereostimuli/' novels_selected{i,1} 'R.wav']);
+    novels_selected{i,4} = soundR';
+end
 
 uiwait(helpdlg('Check: volume settings, audio cable connected???','Triggers box on USB?'));
 
@@ -119,7 +139,7 @@ pahandle = PsychPortAudio('Open');
 PsychPortAudio('LatencyBias',pahandle);
 
 % sets up initial parameters - different for training and not training
-if training_flag < 5
+if training_flag > 0.5 & training_flag < 5
   training_event=abs(training_flag);
   events = ones(1,nEvents)*training_event;
   nTrials = size(events,1);   
@@ -157,30 +177,8 @@ end
 [stdL800, fsstdL800] = audioread('./stereostimuli/800-Hz-std-L-50ms.wav');
 [stdR800, fsstdR800] = audioread('./stereostimuli/800-Hz-std-R-50ms.wav');
 
-[nL1, fsnL1] = audioread('./stereostimuli/bangL.wav');
-[nL2, fsnL2] = audioread('./stereostimuli/barkL.wav');
-[nL3, fsnL3] = audioread('./stereostimuli/chainL.wav');
-[nL4, fsnL4] = audioread('./stereostimuli/clingL.wav');
-[nL5, fsnL5] = audioread('./stereostimuli/clongL.wav');
-[nL6, fsnL6] = audioread('./stereostimuli/dtmfL.wav');
-[nL7, fsnL7] = audioread('./stereostimuli/honkL.wav');
-[nL8, fsnL8] = audioread('./stereostimuli/raygunL.wav');
-
-
-[nR1, fsnR1] = audioread('./stereostimuli/bangR.wav');
-[nR2, fsnR2] = audioread('./stereostimuli/barkR.wav');
-[nR3, fsnR3] = audioread('./stereostimuli/chainR.wav');
-[nR4, fsnR4] = audioread('./stereostimuli/clingR.wav');
-[nR5, fsnR5] = audioread('./stereostimuli/clongR.wav');
-[nR6, fsnR6] = audioread('./stereostimuli/dtmfR.wav');
-[nR7, fsnR7] = audioread('./stereostimuli/honkR.wav');
-[nR8, fsnR8] = audioread('./stereostimuli/raygunR.wav');
-
 devL = Volume_multiplier*devL';
 devR = Volume_multiplier*devR';
-
-misoL = misoL';
-misoR = misoR';
 
 stdL1500 = stdL1500';
 stdR1500 = stdR1500';
@@ -188,23 +186,9 @@ stdR1500 = stdR1500';
 stdL800 = stdL800';
 stdR800 = stdR800';
 
-nL1 = nL1';
-nL2 = nL2';
-nL3 = nL3';
-nL4 = nL4';
-nL5 = nL5';
-nL6 = nL6';
-nL7 = nL7';
-nL8 = nL8';
-
-nR1 = nR1';
-nR2 = nR2';
-nR3 = nR3';
-nR4 = nR4';
-nR5 = nR5';
-nR6 = nR6';
-nR7 = nR7';
-nR8 = nR8';
+misoL = misoL';
+misoR = misoR';
+    
 
 maxpriority = 9;
 oldpriority = Priority(maxpriority);
@@ -228,8 +212,6 @@ kbresponsetime = zeros(nTrials,nEvents)*NaN;
 allevents = zeros(nTrials,nEvents)*NaN;
 
 target_flag=0; %%%This will change to 1 if target is played, and then we know to check keyboard.
-
-
 
 
 w = Screen('OpenWindow',screenNumber, gray);
@@ -338,10 +320,10 @@ for i=1:nTrials
                             disp(['Misophonic sound on LEFT, attended Right and Trigger Number is: ' num2str(events(i,i1)+44)])
                         end
                     else
-                        typeNovel = randi([1,8],1);
+                        typeNovel = randi([1,length(novels_selected)],1);
                         allevents(i,i1)=events(i,i1);
                         if training_flag < 0.5
-                            play_sound(eval(['nL' num2str(typeNovel)]),eval(['fsnL' num2str(typeNovel)]));
+                            play_sound(novels_selected{typeNovel,3},novels_selected{typeNovel,2});
                             send_trigger(di, events(i,i1)+24, use_trigs);
                             disp(['Novel on LEFT, attended Right and Trigger Number is: ' num2str(events(i,i1)+24)])
                         end
@@ -428,9 +410,9 @@ for i=1:nTrials
                             disp(['Misophonic sound on RIGHT, attended Left and Trigger Number is: ' num2str(events(i,i1)+44)])
                         end
                     else
-                        typeNovel = randi([1,8],1);
+                        typeNovel = randi([1,length(novels_selected)],1);
                         if training_flag < 0.5
-                            play_sound(eval(['nR' num2str(typeNovel)]),eval(['fsnR' num2str(typeNovel)]));
+                            play_sound(novels_selected{typeNovel,4},novels_selected{typeNovel,2});
                             allevents(i,i1)=events(i,i1)+6;
                             send_trigger(di, events(i,i1)+24, use_trigs);
                             disp(['Novel on right, attended Left, and Trigger Number is: ' num2str(events(i,i1)+24)])
@@ -521,9 +503,9 @@ for i=1:nTrials
                             disp(['Misophonic sound on LEFT, attended Right and Trigger Number is: ' num2str(events(i,i1)+44)])
                         end
                     else
-                        typeNovel = randi([1,8],1);
+                        typeNovel = randi([1,length(novels_selected)],1);
                         if training_flag < 0.5
-                            play_sound(eval(['nL' num2str(typeNovel)]),eval(['fsnL' num2str(typeNovel)]))
+                            play_sound(novels_selected{typeNovel,3},novels_selected{typeNovel,2});
                             allevents(i,i1)=events(i,i1)+8;
                             send_trigger(di, events(i,i1)+24, use_trigs);
                             disp(['Novel on Left, attended Right, and Trigger Number is: ' num2str(events(i,i1)+24)])
@@ -612,9 +594,9 @@ for i=1:nTrials
                             disp(['Misophonic sound on RIGHT, attended Left and Trigger Number is: ' num2str(events(i,i1)+44)])
                         end
                     else
-                        typeNovel = randi([1,8],1);
+                        typeNovel = randi([1,length(novels_selected)],1);
                         if training_flag < 0.5
-                            play_sound(eval(['nR' num2str(typeNovel)]),eval(['fsnR' num2str(typeNovel)]))
+                            play_sound(novels_selected{typeNovel,4},novels_selected{typeNovel,2});
                             allevents(i,i1)=events(i,i1)+10;
                             send_trigger(di, events(i,i1)+24, use_trigs);
                             disp(['Novel on Right, attended Left, and Trigger Number is: ' num2str(events(i,i1)+24)])
@@ -733,8 +715,8 @@ fprintf(1, '# Misophonic sound on left, attend right =  %4d \n', length(find(Tri
 % set(gca,'fontsize',14);
 % print(gcf,'-dpng',strcat('/home/transcend/Documents/Stimuli/R01-Feedforward-Feedback/2008-cueshift/MatFiles/',subjectID,'_',dateString,'_results','.png'))
 
-save(strcat('/home/transcend/Documents/Stimuli/R01-Feedforward-Feedback/2008-cueshift/MatFiles/',subjectID,'_',dateString,'_Results','.mat'),...
-    'events','Triggers_trace','Response_trace','keyPressed','kbresponsetime','allevents','Volume_multiplier','detected','mrt','Response_trace','nEvents','nRepeats','training_flag','misophone');
+save(strcat('/local_mount/space/hypatia/2/users/Jasmine/github/VisAudTasks/',subjectID,'_',dateString,'_Results','.mat'),...
+    'events','Triggers_trace','Response_trace','keyPressed','kbresponsetime','allevents','Volume_multiplier','detected','mrt','Response_trace','nEvents','nRepeats','training_flag','misophone','novels_selected');
 
 
     function play_sound(sound_data, sfreq)
