@@ -715,7 +715,7 @@ fprintf(1, '# Misophonic sound on left, attend right =  %4d \n', length(find(Tri
 % set(gca,'fontsize',14);
 % print(gcf,'-dpng',strcat('/home/transcend/Documents/Stimuli/R01-Feedforward-Feedback/2008-cueshift/MatFiles/',subjectID,'_',dateString,'_results','.png'))
 
-save(strcat('/home/transcend/Documents/Stimuli/R01-Feedforward-Feedback/2008-cueshift/MatFiles/',subjectID,'_',dateString,'_Results','.mat'),...
+save(strcat('/home/transcend/github/misophonia/results/',subjectID,'_',dateString,'_Results','.mat'),...
     'events','Triggers_trace','Response_trace','keyPressed','kbresponsetime','allevents','Volume_multiplier','detected','mrt','Response_trace','nEvents','nRepeats','training_flag','misophone','novels_selected');
 
 

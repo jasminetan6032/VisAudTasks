@@ -139,7 +139,7 @@ pahandle = PsychPortAudio('Open');
 PsychPortAudio('LatencyBias',pahandle);
 
 % sets up initial parameters - different for training and not training
-if training_flag < 5
+if training_flag > 0.5 & training_flag < 5
   training_event=abs(training_flag);
   events = ones(1,nEvents)*training_event;
   nTrials = size(events,1);   
@@ -176,6 +176,18 @@ end
 
 [stdL800, fsstdL800] = audioread('./stereostimuli/800-Hz-std-L-50ms.wav');
 [stdR800, fsstdR800] = audioread('./stereostimuli/800-Hz-std-R-50ms.wav');
+
+devL = Volume_multiplier*devL';
+devR = Volume_multiplier*devR';
+
+stdL1500 = stdL1500';
+stdR1500 = stdR1500';
+
+stdL800 = stdL800';
+stdR800 = stdR800';
+
+misoL = misoL';
+misoR = misoR';
     
 
 maxpriority = 9;
@@ -202,9 +214,7 @@ allevents = zeros(nTrials,nEvents)*NaN;
 target_flag=0; %%%This will change to 1 if target is played, and then we know to check keyboard.
 
 
-
-rect = [0 0 600 400];
-w = Screen('OpenWindow',screenNumber, gray,rect);
+w = Screen('OpenWindow',screenNumber, gray);
 Screen('Flip', w);
 Screen('FillRect', w,gray);
 Screen('TextSize', w, 60);
@@ -303,7 +313,7 @@ for i=1:nTrials
                     flag1=0;
                 end
                 if count == nnovel
-                    if round(randn(1))
+                    if round(rand(1))
                         if training_flag < 0.5
                             play_sound(misoL,fsmisoL);
                             send_trigger(di, events(i,i1)+44, use_trigs);
@@ -393,7 +403,7 @@ for i=1:nTrials
                 end
 
                 if count == nnovel
-                    if round(randn(1))
+                    if round(rand(1))
                         if training_flag < 0.5
                             play_sound(misoR,fsmisoR);
                             send_trigger(di, events(i,i1)+44, use_trigs);
@@ -486,7 +496,7 @@ for i=1:nTrials
                 end
 
                 if count == nnovel
-                    if round(randn(1))
+                    if round(rand(1))
                         if training_flag < 0.5
                             play_sound(misoL,fsmisoL);
                             send_trigger(di, events(i,i1)+44, use_trigs);
@@ -577,7 +587,7 @@ for i=1:nTrials
                 end
 
                 if count == nnovel
-                    if round(randn(1))
+                    if round(rand(1))
                         if training_flag < 0.5
                             play_sound(misoR,fsmisoR);
                             send_trigger(di, events(i,i1)+44, use_trigs);
@@ -705,7 +715,7 @@ fprintf(1, '# Misophonic sound on left, attend right =  %4d \n', length(find(Tri
 % set(gca,'fontsize',14);
 % print(gcf,'-dpng',strcat('/home/transcend/Documents/Stimuli/R01-Feedforward-Feedback/2008-cueshift/MatFiles/',subjectID,'_',dateString,'_results','.png'))
 
-save(strcat('/home/transcend/Documents/Stimuli/R01-Feedforward-Feedback/2008-cueshift/MatFiles/',subjectID,'_',dateString,'_Results','.mat'),...
+save(strcat('/home/transcend/Documents/Stimuli/R01-Feedforward-Feedback/2008-cueshift/results/',subjectID,'_',dateString,'_Results','.mat'),...
     'events','Triggers_trace','Response_trace','keyPressed','kbresponsetime','allevents','Volume_multiplier','detected','mrt','Response_trace','nEvents','nRepeats','training_flag','misophone','novels_selected');
 
 

@@ -20,6 +20,9 @@ left_targets = [12,14]
 all_targets = right_targets + left_targets
 all_triggers = right_triggers + left_triggers
 not_targets = [1,2,3,4,5,6,7,8,25,26,27,28,35,36,37,38]
+stim_triggers = all_targets + not_targets
+allowed_triggers = all_targets + all_triggers + not_targets
+old_triggers = [131,132,133,134]
 
 auditory_event_dict = {'attend_right_standard_high_right': 1,
                      'attend_right_standard_low_right': 3,
@@ -49,21 +52,40 @@ events = mne.find_events(raw, stim_channel='STI101')
 
 #check for number of stimuli and response triggers. If it doesn't equal to 288 for AttenAud and 168 for AttenVis (per run), or if there are an unreasonable number of response triggers, flag to take a look.
 stimuli_list = events[:,2].tolist()
-list_of_stimuli_triggers = [i for i in stimuli_list if i < 100] 
-list_of_response_triggers = [i for i in stimuli_list if i > 100] 
+list_of_stimuli_triggers = [i for i in stimuli_list if i < 255] 
+list_of_response_triggers = [i for i in stimuli_list if i > 255]
 
 #check column two for any triggers that do not start from zero and print the number in column 3
-non_zero_initial_states = [i for i in range(0, len(events)) if numpy.any(events[i,1]== all_triggers)] #only apply the superimposition fix if the initial state is a response trigger
-problematic_events = events[non_zero_initial_states,:]
+response_trigger_initial_states = [i for i in range(0, len(events)) if numpy.any(events[i,1]== all_triggers)] #only apply the superimposition fix if the initial state is a response trigger
+non_zero_initial_states = [i for i in range(0, len(events)) if not (numpy.any(events[i,1]== all_triggers) or events[i,1]==0)]
+problematic_events = events[non_zero_initial_states + response_trigger_initial_states,:]
 #correct triggers by removing the initial nonzero state from the number in column 3
 #different treatments for stimuli triggers (always below 255) and response triggers (always above 255)
-for i in non_zero_initial_states:
+for i in response_trigger_initial_states:
     if events[i,2] - events[i,1] > 255: 
         events[i,2] = events[i,2] + events[i,1] #response triggers have to be added when they are superimposed on each other
-    else: events[i,2] = events[i,2] - events[i,1] #stimuli triggers are fixed by subtracting the response trigger superimposed on them
-    
-#the simpler way
+    elif events[i,2] - events[i,1] < 255: events[i,2] = events[i,2] - events[i,1] #stimuli triggers are fixed by subtracting the response trigger superimposed on them
+    elif not numpy.any(events[i,2] == all_triggers) and numpy.any(events[i-1,2] == all_triggers): #check for deviations from stuck triggers in trigger column
+        events[i,2] = events[i-1,2] - events[i,2]
+
+
+
+
+                        
+
+for i in non_zero_initial_states:
+    if numpy.any(events[i,2] - events[i,1] == stim_triggers): 
+        events[i,2] = events[i,2] - events[i,1]
+    elif numpy.any(events[i,2] + events[i,1] == all_triggers):
+        events[i,2] = events[i,2] + events[i,1]
+
+#the simpler way (inapplicable for many cases)
 #events[:,2] = events[:,2] - events[:,1] 
+
+#rename old triggers
+for i in range(0,len(events)):
+    if numpy.any(events[i,2] == old_triggers):
+        events[i,2] = events[i,2] - 96
 
 #calculate the time between each trigger from the sample number of each event
 event_sample_number = events[:,0]
@@ -84,8 +106,8 @@ fixed_events = numpy.array([original_events[i,:] for i in range(0, len(original_
 
 #recheck for number of stimuli triggers. If it doesn't equal to 288 for AttenAud and 168 for AttenVis (per run), flag to take a look.
 stimuli_list = fixed_events[:,2].tolist()
-list_of_stimuli_triggers = [i for i in stimuli_list if i < 100] 
-list_of_response_triggers = [i for i in stimuli_list if i > 100] 
+list_of_stimuli_triggers = [i for i in stimuli_list if i < 255] 
+list_of_response_triggers = [i for i in stimuli_list if i > 255] 
 
 #convert fixed events into dataframe to analyse
 analysed_events = pandas.DataFrame(fixed_events) 
@@ -93,7 +115,7 @@ analysed_events.columns = ['sample', 'initialState','trigger','sampleDifference'
 
 trigger_counts = analysed_events['trigger'].value_counts()
 
-#check for largest number of triggers 
+#check for largest number of triggers (leave case for those that are missing one side - eg. participant 075801)
 likely_response_triggers = trigger_counts[trigger_counts.index > 100].nlargest(2).index
 
 if numpy.any(likely_response_triggers[0] == right_triggers):
@@ -204,3 +226,8 @@ for i in range(0,len(df)):
     df.at[i,'Trigger_numbers'] = stimuli_list
     
 df.to_csv('AttenAud_ERM_MRI_alignment_from_20190314_to_20230327_with_triggers.csv')
+
+#check for range of gaps between sticky triggers 
+#defined as any response triggers that follow a response trigger or a trigger corrected from an initial state of a response trigger
+stuck_triggers = [i for i in range(0, len(events)) if numpy.any(events[i,2]== all_triggers) and (numpy.any(events[i-1,2]== all_triggers) or numpy.any(events[i-1,1]== all_triggers))]
+time_to_repeat = pandas.Series(original_events[stuck_triggers,3])
