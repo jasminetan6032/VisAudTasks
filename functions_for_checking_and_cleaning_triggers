@@ -46,19 +46,45 @@ auditory_event_dict = {'attend_right_standard_high_right': 1,
                      'novel_right_high': 28,
                      }  
 
-file = '/autofs/cluster/transcend/MEG/AttenAud/110101/visit_20220930/110101_AttenAud_run02_raw.fif'
+misophonia_event_dict = {'attend_right_standard_high_right': 1,
+                     'attend_right_standard_low_right': 3,
+                     'attend_right_target_high': 11,
+                     'attend_right_target_low': 13,
+                     'attend_right_low_left': 5,
+                     'attend_right_high_left': 7,
+                     'attend_right_devL_low': 35,
+                     'attend_right_devL_high': 37,
+                     'novel_left_low': 25,
+                     'novel_left_high': 27,
+                     'misophonia_left_low': 45,
+                     'misophonia_left_high': 47,
+                     'attend_left_standard_high_left': 2,
+                     'attend_left_standard_low_left': 4,
+                     'attend_left_target_high': 12,
+                     'attend_left_target_low': 14,
+                     'attend_left_low_right': 6,
+                     'attend_left_high_right': 8,
+                     'attend_left_devR_low': 36,
+                     'attend_left_devR_high': 38,
+                     'novel_right_low': 26,
+                     'novel_right_high': 28,
+                     'misophonia_right_low': 46,
+                     'misophonia_right_high': 48
+                     }  
+file = '/autofs/cluster/transcend/MEG/AttenAud/075801/visit_20230311/075801_AttenAud_run01_raw.fif'
 raw = mne.io.read_raw_fif(file)
-events = mne.find_events(raw, stim_channel='STI101')
+events = mne.find_events(raw, stim_channel='STI101',shortest_event=1)
 
 #check for number of stimuli and response triggers. If it doesn't equal to 288 for AttenAud and 168 for AttenVis (per run), or if there are an unreasonable number of response triggers, flag to take a look.
-stimuli_list = events[:,2].tolist()
-list_of_stimuli_triggers = [i for i in stimuli_list if i < 255] 
+stimuli_list = events[:, 2].tolist()
+list_of_stimuli_triggers = [i for i in stimuli_list if i < 255]
 list_of_response_triggers = [i for i in stimuli_list if i > 255]
 
 #check column two for any triggers that do not start from zero and print the number in column 3
 response_trigger_initial_states = [i for i in range(0, len(events)) if numpy.any(events[i,1]== all_triggers)] #only apply the superimposition fix if the initial state is a response trigger
 non_zero_initial_states = [i for i in range(0, len(events)) if not (numpy.any(events[i,1]== all_triggers) or events[i,1]==0)]
 problematic_events = events[non_zero_initial_states + response_trigger_initial_states,:]
+
 #correct triggers by removing the initial nonzero state from the number in column 3
 #different treatments for stimuli triggers (always below 255) and response triggers (always above 255)
 for i in response_trigger_initial_states:
@@ -67,11 +93,6 @@ for i in response_trigger_initial_states:
     elif events[i,2] - events[i,1] < 255: events[i,2] = events[i,2] - events[i,1] #stimuli triggers are fixed by subtracting the response trigger superimposed on them
     elif not numpy.any(events[i,2] == all_triggers) and numpy.any(events[i-1,2] == all_triggers): #check for deviations from stuck triggers in trigger column
         events[i,2] = events[i-1,2] - events[i,2]
-
-
-
-
-                        
 
 for i in non_zero_initial_states:
     if numpy.any(events[i,2] - events[i,1] == stim_triggers): 
@@ -97,6 +118,9 @@ sample_differences = numpy.array(sample_differences)
 sample_differences = numpy.reshape(sample_differences,(sample_differences.size,1))
 
 original_events = numpy.append(events,sample_differences, axis = 1)
+
+if not problematic_events.size >0:
+    fixed_events = original_events
 #first check if it is a button press, then drop it if the previous one were also button presses or were fixed from button press superimpositions 
 #and followed too quickly from the previous trigger
 sticky_triggers =numpy.array([original_events[i,:] for i in range(0, len(original_events)) #
@@ -168,7 +192,7 @@ ref_index = ['Correct_Rejection', 'Target','Hit','Non-Target','False_Alarm','Inc
 if not set(ref_index).issubset(response_counts.index):
     response_counts = response_counts.reindex(ref_index,fill_value=0)
     
-ref_index_stim = [1,2,3,4,5,6,7,8,11,12,13,14,25,26,27,28,35,36,37,38] + all_triggers
+ref_index_stim = [1,2,3,4,5,6,7,8,11,12,13,14,25,26,27,28,35,36,37,38,45,46,47,48] + all_triggers
 if not set(ref_index_stim).issubset(trigger_counts.index):
     trigger_counts=trigger_counts.reindex(ref_index_stim,fill_value=0)
 
@@ -178,10 +202,11 @@ behavioural_summary = { "Hits":response_counts["Hit"], "FalseAlarms":response_co
                     "total_nStimuli":len(list_of_stimuli_triggers),"total_Responses": response_counts["Hit"] + response_counts["False_Alarm"]+ response_counts["Incorrect_Response"],
                     "reaction_time": analysed_events['reaction_time'].median(),
                     "Stds_on_R_Attend_R":trigger_counts[1]+trigger_counts[3],"Stds_on_L_Attend_L":trigger_counts[2]+trigger_counts[4],
-                    "Stds_on_R_Attend_L":trigger_counts[5]+trigger_counts[7],"Stds_on_L_Attend_R":trigger_counts[6]+trigger_counts[8],
+                    "Beeps_on_R_Attend_L":trigger_counts[5]+trigger_counts[7],"Beeps_on_L_Attend_R":trigger_counts[6]+trigger_counts[8],
                     "Targets_on_R_Attend_R":trigger_counts[11]+trigger_counts[13],"Targets_on_L_Attend_L":trigger_counts[12]+trigger_counts[14],
                     "Novels_on_R_Attend_L":trigger_counts[25]+trigger_counts[27],"Novels_on_L_Attend_R":trigger_counts[26]+trigger_counts[28],
-                    "Targets_on_R_Attend_L":trigger_counts[35]+trigger_counts[37],"Targets_on_L_Attend_R":trigger_counts[36]+trigger_counts[38]}
+                    "Distractors_on_R_Attend_L":trigger_counts[35]+trigger_counts[37],"Distractors_on_L_Attend_R":trigger_counts[36]+trigger_counts[38],
+                    "Misophones_on_R_Attend_L":trigger_counts[45]+trigger_counts[47],"Misophones_on_L_Attend_R":trigger_counts[46]+trigger_counts[48]}
 
     
 with open('behavioural_data.pickle', 'wb') as handle:
