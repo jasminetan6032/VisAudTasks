@@ -71,9 +71,14 @@ misophonia_event_dict = {'attend_right_standard_high_right': 1,
                      'misophonia_right_low': 46,
                      'misophonia_right_high': 48
                      }  
-file = '/autofs/cluster/transcend/MEG/AttenAud/075801/visit_20230311/075801_AttenAud_run01_raw.fif'
+file = '/autofs/space/tapputi_001/users/sergio/AttenAud/106201/visit_20210614/106201_AttenAud_run01_Novels_ave.fif'
 raw = mne.io.read_raw_fif(file)
-events = mne.find_events(raw, stim_channel='STI101',shortest_event=1)
+events = mne.find_events(raw, stim_channel='STI101', uint_cast= True)
+events_again = mne.find_events(raw, stim_channel='STI101',shortest_event = 1, uint_cast= True, output = 'step')
+epochs = mne.read_epochs(file)
+evoked = epochs["novel"].average()
+
+time = raw.info['meas_date'].time()
 
 #check for number of stimuli and response triggers. If it doesn't equal to 288 for AttenAud and 168 for AttenVis (per run), or if there are an unreasonable number of response triggers, flag to take a look.
 stimuli_list = events[:, 2].tolist()
@@ -256,3 +261,8 @@ df.to_csv('AttenAud_ERM_MRI_alignment_from_20190314_to_20230327_with_triggers.cs
 #defined as any response triggers that follow a response trigger or a trigger corrected from an initial state of a response trigger
 stuck_triggers = [i for i in range(0, len(events)) if numpy.any(events[i,2]== all_triggers) and (numpy.any(events[i-1,2]== all_triggers) or numpy.any(events[i-1,1]== all_triggers))]
 time_to_repeat = pandas.Series(original_events[stuck_triggers,3])
+
+spurious_triggers = [i for i in range(0, len(events)) if events[i,1]!=0 and events[i,1]==events[i-1,2]]
+for i in spurious_triggers:
+    events_del = numpy.delete(events, i-1,0)
+    events_del[i-1,1] = 0
