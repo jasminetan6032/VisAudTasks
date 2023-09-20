@@ -29,7 +29,7 @@ audiowrite("right_ear.wav",soundstream,Fs)
 
 clear soundstream
 
-left_ear = [5,5,5,2,5,5,5,5,5,1,5,5,5,5,5,5,3,5,5];
+left_ear = [5,5,5,2,5,5,5,1];
 
 soundstream = sounds{left_ear(1),3};
 
