@@ -3,15 +3,16 @@
 list_novels = {'bangL','barkL','chainL','clingL','clongL','dtmfL','honkL', 'raygunL'};
 list_misophones = {'breathing','chewing','joint_cracking','lip_smacking','nail_clipping','slurping','snoring', 'sniffing', 'swallowing','throat_clearing'};
 list_beeps = {'harm-dev-L-50ms', '1500-Hz-std-L-50ms','800-Hz-std-L-50ms'};
+list_check_sounds = {'breathing1','breathingL','joint_crackingL','jointcrack5'};
 
 cd /local_mount/space/hypatia/2/users/Jasmine/github/VisAudTasks/stereostimuli
 
-sound_type = 'beeps';
+sound_type = 'misophones';
 list_sounds = eval(['list_' sound_type]);
 
 for sound_i = 1:length(list_sounds)
 
-    [sound, Fs] = audioread([list_sounds{sound_i} '.wav']);
+    [sound, Fs] = audioread([list_sounds{sound_i} '.wav']);%add an L or R for misophones 
     
     %Calculate and save length of sounds
     sounds{sound_i,1} = list_sounds{sound_i};
